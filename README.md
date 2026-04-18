@@ -1,108 +1,68 @@
 # Integrated-Transcriptomics-and-Survival-Analysis-of-TCGA-LUAD-using-DESeq2-and-GSEA
 RNA-seq analysis pipeline of TCGA-LUAD using DESeq2 for differential expression, clusterProfiler for GO/KEGG enrichment, GSEA for pathway analysis, and survival analysis for prognostic genes. Identifies key dysregulated pathways and potential biomarkers in lung adenocarcinoma.
-# 🧬 TCGA-LUAD RNA-Seq Analysis Pipeline
 
-![R](https://img.shields.io/badge/R-276DC3?style=for-the-badge&logo=r&logoColor=white)
-![TCGA](https://img.shields.io/badge/TCGA-LUAD-blue?style=for-the-badge)
-![DESeq2](https://img.shields.io/badge/DESeq2-Differential%20Expression-orange?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+# TCGA-LUAD RNA-Seq Analysis Pipeline
+## Overview
 
----
+This project focuses on the analysis of RNA-seq data from TCGA-LUAD (lung adenocarcinoma). The workflow covers differential gene expression analysis, functional enrichment, pathway analysis, and survival analysis to explore molecular changes associated with tumor progression.
 
-## 📌 Overview
-
-This project presents an end-to-end RNA-seq bioinformatics pipeline for analyzing **lung adenocarcinoma (TCGA-LUAD)** data. It integrates differential expression analysis, functional enrichment, gene set enrichment analysis (GSEA), and survival analysis to identify key molecular pathways and potential prognostic biomarkers.
+The pipeline is designed to process raw count data and extract biologically meaningful insights using standard bioinformatics tools in R.
 
 ---
 
-## 🎯 Objectives
+## Objectives
 
-- Identify differentially expressed genes (DEGs) in LUAD vs normal tissue  
-- Perform functional enrichment analysis (GO & KEGG)  
-- Conduct Gene Set Enrichment Analysis (GSEA)  
-- Evaluate prognostic significance using survival analysis  
-- Visualize transcriptomic patterns and pathway alterations  
-
----
-
-## 🧪 Methodology
-
-The workflow is implemented in **R** using Bioconductor packages:
-
-- `TCGAbiolinks` → Data acquisition  
-- `DESeq2` → Differential expression analysis  
-- `clusterProfiler` → GO & KEGG enrichment  
-- `org.Hs.eg.db` → Gene annotation  
-- `enrichplot` → Visualization  
-- `survival`, `survminer` → Survival analysis  
+- Identify differentially expressed genes between tumor and normal samples  
+- Perform GO and KEGG enrichment analysis to identify affected biological pathways  
+- Conduct Gene Set Enrichment Analysis (GSEA) using ranked gene lists  
+- Evaluate the association of gene expression with patient survival  
+- Visualize key results using standard plots  
 
 ---
 
-## 📊 Workflow Summary
+## Workflow
 
-1. Download TCGA-LUAD RNA-seq count data  
-2. Preprocess and define tumor vs normal groups  
-3. Perform differential expression analysis (DESeq2)  
-4. Identify significant genes and visualize (volcano plot)  
-5. Conduct GO and KEGG enrichment analysis  
-6. Perform GSEA using ranked gene lists  
-7. Run Kaplan–Meier survival analysis for selected genes  
-8. Visualize results (dot plots, ridge plots, enrichment plots)  
+1. Download TCGA-LUAD RNA-seq count data using TCGAbiolinks  
+2. Preprocess data and define tumor vs normal groups  
+3. Perform differential expression analysis using DESeq2  
+4. Filter and extract significant genes  
+5. Conduct GO and KEGG enrichment analysis using clusterProfiler  
+6. Generate ranked gene list for GSEA  
+7. Perform GSEA for GO and KEGG pathways  
+8. Perform Kaplan–Meier survival analysis using clinical data  
+9. Visualize results using ggplot2 and enrichplot  
 
 ---
 
-## 📈 Key Outputs
+## Tools and Packages
 
-- Differentially expressed genes (DEGs)  
+- TCGAbiolinks  
+- DESeq2  
+- clusterProfiler  
+- org.Hs.eg.db  
+- enrichplot  
+- survival  
+- survminer  
+- ggplot2  
+
+---
+
+## Outputs
+
+- Differentially expressed gene table  
 - Volcano plot of gene expression changes  
 - GO and KEGG enriched pathways  
-- GSEA enrichment and ridge plots  
-- Kaplan–Meier survival curves  
+- GSEA enrichment plots and ridge plots  
+- Kaplan–Meier survival curves for selected genes  
 
 ---
 
-## 🧠 Biological Insights
+## Notes
 
-This analysis identifies dysregulated biological processes in lung adenocarcinoma, including cell cycle regulation, immune response, and metabolic reprogramming. Survival analysis highlights potential prognostic biomarkers linked to patient outcomes.
-
----
-
-## ⚙️ Requirements
-
-- R (≥ 4.0)
-- Bioconductor packages:
-  - `TCGAbiolinks`
-  - `DESeq2`
-  - `clusterProfiler`
-  - `org.Hs.eg.db`
-  - `enrichplot`
-  - `survival`
-  - `survminer`
-  - `ggplot2`
+The pipeline can be applied to other TCGA cancer datasets with minor modifications to the project ID. It is structured for reproducibility and further extension into multi-omics or clinical integration studies.
 
 ---
 
-## 🚀 Future Work
+## License
 
-- Multi-gene survival risk modeling  
-- Integration with clinical variables (stage, age, gender)  
-- Machine learning-based biomarker discovery  
-- Validation using external GEO datasets  
-
----
-
-## 📂 Reproducibility
-
-This pipeline is fully reproducible and can be adapted to other TCGA cancer types such as BRCA, COAD, and others with minimal modifications.
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License.
-
----
-
-## 👨‍🔬 Author
-
-Bioinformatics RNA-seq analysis project for TCGA-LUAD.
+This project is intended for academic and research use.
