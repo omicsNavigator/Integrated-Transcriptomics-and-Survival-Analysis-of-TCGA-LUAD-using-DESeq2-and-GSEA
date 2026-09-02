@@ -1,0 +1,141 @@
+## =====================================================================
+## TCGA-LUAD Transcriptomics, GSEA, & Survival Workflow
+## Author: Prakash Nath | Tech Stack: DESeq2, clusterProfiler, Survival
+## =====================================================================
+
+library(TCGAbiolinks)
+library(SummarizedExperiment)
+library(DESeq2)
+library(ggplot2)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(enrichplot)
+library(tidydr)
+library(survival)
+library(survminer)
+
+# 0. DIRECTORY SANITIZATION --------------------------------------------
+if (!dir.exists("images")) { dir.create("images") }
+
+# 1. DATA ACQUISITION WITH LOCAL CACHING -------------------------------
+rds_path <- "tcga_luad.rds"
+
+if (!file.exists(rds_path)) {
+  message("Downloading TCGA-LUAD data from GDC Portal...")
+  query <- GDCquery(project = "TCGA-LUAD",
+                    data.category = "Transcriptome Profiling",
+                    data.type = "Gene Expression Quantification",
+                    workflow.type = "STAR - Counts")
+  GDCdownload(query)
+  data <- GDCprepare(query)
+  saveRDS(data, rds_path)
+} else {
+  message("Loading cached TCGA-LUAD matrix locally...")
+  data <- readRDS(rds_path)
+}
+
+# 2. EXPRESSION MATRIX & METADATA PREPARATION -------------------------
+counts <- assay(data)
+metadata_df <- as.data.frame(colData(data))
+metadata_df$condition <- factor(ifelse(metadata_df$sample_type == "Primary Tumor", "Tumor", "Normal"))
+
+stopifnot(all(colnames(counts) == rownames(metadata_df)))
+
+# 3. DIFFERENTIAL EXPRESSION MATRIX (DESeq2) ---------------------------
+dds <- DESeqDataSetFromMatrix(countData = counts,
+                              colData = metadata_df,
+                              design = ~ condition)
+
+# Filter low counts to optimize statistical performance
+dds <- dds[rowSums(counts(dds)) > 10, ]
+dds <- DESeq(dds)
+res <- results(dds)
+res_ordered <- res[order(res$padj), ]
+res_df <- as.data.frame(res_ordered)
+
+# Isolate clean significant subsets
+sigGenes <- res_df[!is.na(res_df$padj) & res_df$padj < 0.05 & abs(res_df$log2FoldChange) > 1, ]
+
+# 4. VOLCANO PLOT EXPORT ----------------------------------------------
+res_df$significant <- "Not Significant"
+res_df$significant[res_df$padj < 0.05 & res_df$log2FoldChange > 1] <- "Up-regulated"
+res_df$significant[res_df$padj < 0.05 & res_df$log2FoldChange < -1] <- "Down-regulated"
+
+volcano_plot <- ggplot(res_df[!is.na(res_df$padj), ], aes(x = log2FoldChange, y = -log10(padj), color = significant)) +
+  geom_point(alpha = 0.4, size = 1) +
+  scale_color_manual(values = c("Down-regulated" = "blue", "Not Significant" = "grey", "Up-regulated" = "red")) +
+  theme_minimal() +
+  labs(title = "TCGA Lung Adenocarcinoma Volcano Plot", x = "Log2 Fold Change", y = "-log10 Adjusted p-value")
+
+png("images/volcano_plot.png", width = 800, height = 600, res = 120)
+print(volcano_plot)
+
+# 5. AUTOMATED SURVIVAL ANALYSIS (KRAS TARGET) ------------------------
+# Use robust, normalized counts to prevent sizing bias
+normalized_counts <- counts(dds, normalized = TRUE)
+rownames(normalized_counts) <- gsub("\\..*", "", rownames(normalized_counts))
+
+kras_id <- bitr("KRAS", fromType = "SYMBOL", toType = "ENSEMBL", OrgDb = org.Hs.eg.db)$ENSEMBL[1]
+expr_values <- normalized_counts[kras_id, ]
+
+surv_time <- ifelse(is.na(metadata_df$days_to_death), metadata_df$days_to_last_follow_up, metadata_df$days_to_death)
+surv_df <- data.frame(expression = as.numeric(expr_values), time = as.numeric(surv_time), status = ifelse(metadata_df$vital_status == "Dead", 1, 0))
+surv_df <- na.omit(surv_df)
+
+surv_df$group <- factor(ifelse(surv_df$expression > median(surv_df$expression), "High Expression", "Low Expression"))
+survival_fit <- survfit(Surv(time, status) ~ group, data = surv_df)
+
+surv_plot <- ggsurvplot(survival_fit, data = surv_df, pval = TRUE, risk.table = TRUE, title = "KRAS Survival Signature (TCGA-LUAD)")
+
+png("images/kras_survival_curve.png", width = 800, height = 700, res = 120)
+print(surv_plot)
+
+# 6. GSEA DATA RE-RANKING PREPARATION ----------------------------------
+res_df$ENSEMBL <- gsub("\\..*", "", rownames(res_df))
+gene_map <- bitr(res_df$ENSEMBL, fromType = "ENSEMBL", toType = "ENTREZID", OrgDb = org.Hs.eg.db)
+
+# Merge datasets cleanly using matches
+res_df <- res_df[res_df$ENSEMBL %in% gene_map$ENSEMBL, ]
+gene_map <- gene_map[match(res_df$ENSEMBL, gene_map$ENSEMBL), ]
+res_df$ENTREZID <- gene_map$ENTREZID
+
+# Remove statistical discrepancies and duplicates
+res_df <- res_df[!is.na(res_df$stat), ]
+res_df <- res_df[!duplicated(res_df$ENTREZID), ]
+
+# Build numerical named vector for GSEA
+gene_list <- res_df$stat
+names(gene_list) <- as.character(res_df$ENTREZID)
+gene_list <- sort(gene_list, decreasing = TRUE)
+
+# 7. EXECUTING GSEA GO & KEGG WITH FAILSAPE FILTERS --------------------
+gsea_go <- gseGO(geneList = gene_list, OrgDb = org.Hs.eg.db, ont = "BP",
+                 keyType = "ENTREZID", minGSSize = 10, maxGSSize = 500,
+                 pvalueCutoff = 0.1, verbose = FALSE) # Relaxed to 0.1 for baseline rendering safety
+
+gsea_kegg <- gseKEGG(geneList = gene_list, organism = "hsa", minGSSize = 5,
+                     pvalueCutoff = 0.1, verbose = FALSE)
+
+# 8. EXPLICIT VISUALIZATION PRODUCTION AND LOGGING --------------------
+# GO GSEA Plots
+if (nrow(as.data.frame(gsea_go)) > 0) {
+  go_gsea_dot <- dotplot(gsea_go, showCategory = 10, title = "GSEA GO-Biological Processes")
+  png("images/gsea_go_dotplot.png", width = 800, height = 600, res = 120)
+  print(go_gsea_dot)
+  
+  go_ridge <- ridgeplot(gsea_go, showCategory = 10)
+  png("images/gsea_go_ridgeplot.png", width = 800, height = 600, res = 120)
+  print(go_ridge)
+}
+
+# KEGG GSEA Plots
+if (nrow(as.data.frame(gsea_kegg)) > 0) {
+  kegg_gsea_dot <- dotplot(gsea_kegg, showCategory = 10, title = "GSEA KEGG Landscape")
+  png("images/gsea_kegg_dotplot.png", width = 800, height = 600, res = 120)
+  print(kegg_gsea_dot)
+ 
+  kegg_ridge <- ridgeplot(gsea_kegg, showCategory = 10)
+  png("images/gsea_kegg_ridgeplot.png", width = 800, height = 600, res = 120)
+  print(kegg_ridge)
+}
+
