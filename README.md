@@ -1,68 +1,55 @@
-# Integrated-Transcriptomics-and-Survival-Analysis-of-TCGA-LUAD-using-DESeq2-and-GSEA
-RNA-seq analysis pipeline of TCGA-LUAD using DESeq2 for differential expression, clusterProfiler for GO/KEGG enrichment, GSEA for pathway analysis, and survival analysis for prognostic genes. Identifies key dysregulated pathways and potential biomarkers in lung adenocarcinoma.
+# Integrated Computational Transcriptomics & GSEA Pipeline (TCGA-LUAD)
 
-# TCGA-LUAD RNA-Seq Analysis Pipeline
-## Overview
+## 🧬 Project Overview
+This production-grade bioinformatics repository contains a complete, automated pipeline engineered to process and evaluate high-throughput RNA-Seq data from the Lung Adenocarcinoma (`TCGA-LUAD`) patient cohort. 
 
-This project focuses on the analysis of RNA-seq data from TCGA-LUAD (lung adenocarcinoma). The workflow covers differential gene expression analysis, functional enrichment, pathway analysis, and survival analysis to explore molecular changes associated with tumor progression.
+The workflow seamlessly transitions from raw counts normalization to exploratory target identification. It implements threshold-free Gene Set Enrichment Analysis (GSEA) to map oncogenic pathway perturbations and evaluates specific oncogene transcripts (e.g., `KRAS`) against longitudinal clinical survival matrices.
 
-The pipeline is designed to process raw count data and extract biologically meaningful insights using standard bioinformatics tools in R.
+## 🚀 Key Engineering & Computational Highlights
+* **Automated Data Persistence Caching:** Features a robust local evaluation wrapper that checks for the existence of `tcga_luad.rds` before calling the GDC server API, saving critical bandwidth and runtime overhead.
+* **Continuous Rank-Metric Scoring:** Re-engineered traditional over-representation analysis by converting raw statistical variances into a continuous sorted vector based on Wald test configurations, enabling non-biased threshold-free GSEA.
+* **Robust Graphic Automation:** Employs explicit device output pipelines (`png` writing wrappers) with fail-safe conditional handling blocks (`if(nrow...)`) to ensure error-free automated plotting execution.
 
----
+## 📂 Repository Architecture
+```text
+├── r_scripts/
+│   └── luad_gsea_pipeline.R     # Complete processing, GSEA, & analysis script
+├── images/
+│   ├── volcano_plot.png         # Transcriptional distribution landscape
+│   ├── kras_survival_curve.png  # KM-curve tracking normalized KRAS values
+│   ├── gsea_go_dotplot.png      # GSEA GO Term Category Distribution
+│   ├── gsea_go_ridgeplot.png    # Activation/Suppression frequency densities
+│   ├── gsea_kegg_dotplot.png    # KEGG Pathway distribution landscape
+│   └── gsea_kegg_pathway_trace.png # Classical running enrichment score plot
+└── README.md                    # Core deployment & functional architecture documentation
+```
 
-## Objectives
+## 📊 Core Analytical Outputs
 
-- Identify differentially expressed genes between tumor and normal samples  
-- Perform GO and KEGG enrichment analysis to identify affected biological pathways  
-- Conduct Gene Set Enrichment Analysis (GSEA) using ranked gene lists  
-- Evaluate the association of gene expression with patient survival  
-- Visualize key results using standard plots  
+### 1. Differential Expression Profile
+Using empirical Bayes shrinkage models, samples were stratified into tumor vs normal states to map broad genetic deregulation across the LUAD cohort.
 
----
+![Volcano Plot](images/volcano_plot.png)
 
-## Workflow
+### 2. Clinical Biomarker Case Study (KRAS Prognostics)
+Instead of arbitrary raw counts, the pipeline extracts exact size-factor normalized expressions of `KRAS` to split the patient population across the historical clinical median, calculating robust log-rank p-values and generation matrices.
 
-1. Download TCGA-LUAD RNA-seq count data using TCGAbiolinks  
-2. Preprocess data and define tumor vs normal groups  
-3. Perform differential expression analysis using DESeq2  
-4. Filter and extract significant genes  
-5. Conduct GO and KEGG enrichment analysis using clusterProfiler  
-6. Generate ranked gene list for GSEA  
-7. Perform GSEA for GO and KEGG pathways  
-8. Perform Kaplan–Meier survival analysis using clinical data  
-9. Visualize results using ggplot2 and enrichplot  
+![KRAS Survival Curve](images/kras_survival_curve.png)
 
----
+### 3. Pathway Level GSEA Activations
+By ranking all detectable transcripts across their diagnostic Wald statistic values, the pipeline reveals whole-system shifts in metabolic profiles and structural cell cycle behaviors without human threshold bias.
 
-## Tools and Packages
+| GSEA KEGG Pathways Distribution | Running Enrichment Score Trace |
+|---|---|
+| ![GSEA KEGG Dotplot](images/gsea_kegg_dotplot.png) | ![GSEA KEGG Trace](images/gsea_kegg_pathway_trace.png) |
 
-- TCGAbiolinks  
-- DESeq2  
-- clusterProfiler  
-- org.Hs.eg.db  
-- enrichplot  
-- survival  
-- survminer  
-- ggplot2  
-
----
-
-## Outputs
-
-- Differentially expressed gene table  
-- Volcano plot of gene expression changes  
-- GO and KEGG enriched pathways  
-- GSEA enrichment plots and ridge plots  
-- Kaplan–Meier survival curves for selected genes  
-
----
-
-## Notes
-
-The pipeline can be applied to other TCGA cancer datasets with minor modifications to the project ID. It is structured for reproducibility and further extension into multi-omics or clinical integration studies.
-
----
-
-## License
-
-This project is intended for academic and research use.
+## 🏁 Execution Architecture
+1. Clone this workspace:
+   ```bash
+   git clone https://github.com
+   cd tcga-luad-gsea-pipeline
+   ```
+2. Open your R Environment and source the automation script:
+   ```r
+   source("r_scripts/luad_gsea_pipeline.R")
+   ```
