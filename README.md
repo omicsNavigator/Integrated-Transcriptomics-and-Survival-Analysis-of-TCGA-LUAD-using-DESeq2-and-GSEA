@@ -20,7 +20,7 @@ The workflow seamlessly transitions from raw counts normalization to exploratory
 │   ├── gsea_go_dotplot.png      # GSEA GO Term Category Distribution
 │   ├── gsea_go_ridgeplot.png    # Activation/Suppression frequency densities
 │   ├── gsea_kegg_dotplot.png    # KEGG Pathway distribution landscape
-│   └── gsea_kegg_pathway_trace.png # Classical running enrichment score plot
+│   └── gsea_kegg_ridgeplot.png # Activation/Suppression frequency densities
 └── README.md                    # Core deployment & functional architecture documentation
 ```
 
