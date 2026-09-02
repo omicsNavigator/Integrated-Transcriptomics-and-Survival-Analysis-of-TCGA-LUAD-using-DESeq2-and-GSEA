@@ -39,9 +39,9 @@ Instead of arbitrary raw counts, the pipeline extracts exact size-factor normali
 ### 3. Pathway Level GSEA Activations
 By ranking all detectable transcripts across their diagnostic Wald statistic values, the pipeline reveals whole-system shifts in metabolic profiles and structural cell cycle behaviors without human threshold bias.
 
-| GSEA KEGG Pathways Distribution | Running Enrichment Score Trace |
+| GSEA KEGG Pathways Distribution |
 |---|---|
-| ![GSEA KEGG Dotplot](images/gsea_kegg_dotplot.png) | ![GSEA KEGG Trace](images/gsea_kegg_pathway_trace.png) |
+| ![GSEA KEGG Dotplot](images/gsea_kegg_dotplot.png) |
 
 ## 🏁 Execution Architecture
 1. Clone this workspace:
